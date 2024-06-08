@@ -1,0 +1,329 @@
+---
+title: "R code and report"
+author: "B240202"
+date: "`r Sys.Date()`"
+output: pdf_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+# Task 1: R 
+
+In this task you are asked to investigate the data in `scot_unintentional_injuries.csv` and `healthboards.csv`. 
+
+The Unintentional Injuries dataset from Public Health Scotland provides information on emergency hospital admissions as a result of unintentional injuries and assaults. You can find more [information abou t the unintentional injuries data set here, including a data dictionary](https://www.opendata.nhs.scot/dataset/unintentional-injuries/resource/aee43295-2a13-48f6-bf05-92769ca7c6cf) and [here for more information about the health boards dataset](https://www.opendata.nhs.scot/dataset/geography-codes-and-labels/resource/652ff726-e676-4a20-abda-435b98dd7bdc). Do not import the data via the URL, you must use the data files provided for this assignment. 
+
+Follow the steps below to ultimately answer the final questions with the data. 
+
+* load the necessary libraries and packages
+* read in the data
+* join the two data sets together
+* check the data types of the variables of interest and ensure they are they type you want them to be. If not, change them.
+* check for the content/information contained within your variables of interest and ensure you are satisfied
+with the presentation
+* check for and deal with any missing data, if deemed appropriate
+* check the data formats (wide vs long) and transform if it is not appropriate
+
+*Question:* **Across Scotland, what are the most and least common unintentional injuries for young people aged 5-14 in 2013/14 and 2022/23 to be admitted to the emergency hospital for? Did the rate of these injuries change between time periods?**
+
+```{r}
+
+#Importing libraries
+
+library(tidyverse)
+library(lubridate)
+
+```
+
+```{r}
+#importing the data to work with
+
+Unintentional_Injuries <-read_csv("~/DTSPRcourse-AY-2023-24/data/scot_unintentional_injuries.csv")
+Health_Boards <- read_csv("~/DTSPRcourse-AY-2023-24/data/healthboards.csv")
+
+```
+
+```{r}
+#Viewing dataset1
+
+Unintentional_Injuries
+
+```
+
+```{r}
+#Viewing dataset2
+
+Health_Boards
+```
+
+```{r}
+# Joining the two data sets together
+
+df_join <- left_join(Unintentional_Injuries, Health_Boards, by = c("HBR" = "HB"))
+
+df_join
+
+```
+
+```{r}
+#Selecting relevant columns to work with
+
+relevant_data <- df_join %>% 
+  select(FinancialYear,AgeGroup,InjuryType,NumberOfAdmissions,HBName)
+
+relevant_data
+
+```
+
+```{r}
+#Reviewing data types for relevant columns
+
+glimpse(relevant_data)
+
+```
+
+```{r}
+#The character datatypes need to be converted to factors.
+#I decided to use the across and where functions to coerce all characters to be factors
+
+relevant_data <- relevant_data %>% 
+  mutate(across(where(is.character), as.factor))
+
+```
+```{r}
+#Rechecking data types for relevant columns
+
+glimpse(relevant_data) #The data types have been converted accordingly.
+
+```
+
+```{r}
+
+#Creating a summary of the data
+
+relevant_data %>% 
+  summary()
+
+```
+
+```{r}
+#Selecting the rows we need to answer the question
+
+answer_df <- relevant_data %>% 
+  filter(
+         FinancialYear %in% c("2013/14", "2022/23"),
+         AgeGroup == "15-24 years"
+         )
+answer_df
+```
+```{r}
+#Counting the missing values in the HBName column
+
+answer_df %>% 
+  pull(HBName) %>% 
+  is.na() %>% 
+  sum()
+
+```
+
+```{r}
+#Removing the missing values which will remove 270 rows of data
+
+answer_df <- na.omit(answer_df)
+
+answer_df
+
+```
+
+```{r}
+#Answering the question at hand
+
+answer_df %>% 
+  group_by(FinancialYear, InjuryType,) %>% 
+  summarise(SumOfInjuries = sum(NumberOfAdmissions))
+
+
+```
+
+```{r}
+
+#Grouping relevant columns and summarizing using the sum function.
+
+answer_df <- answer_df %>% 
+  group_by(FinancialYear, InjuryType,) %>% 
+  summarise(SumOfInjuries = sum(NumberOfAdmissions))
+
+answer_df
+```
+
+```{r}
+
+#Sorting the data in descending order
+
+sorted_df <- arrange(answer_df,desc(FinancialYear),desc(SumOfInjuries))
+
+sorted_df
+
+```
+
+
+**Task 1 (R) Answer** (in 1-2 sentences): 
+
+Most common injury that led to admission in the year 2022/23 was falls and the least common was scalded while in the year 2013/14 the most common was falls and least common poisoned. It is clear that the cases of falls reduced between the period of 2013/14 to 2022/23 but cases of poisoning increased.
+
+
+## Task 1 Report
+
+* word limit: 1100 words maximum including Task 2 report  
+* word count: 512
+* Discuss your approach to solving this task in both languages (what you did and why you did it this way) and how your approach was similar or different between Python and R. 
+
+For the Python task, I began by loading the necessary data to work with through the help of the Pandas package. After loading the two datasets, I utilized the pandas merge function to merge them into a single dataset. Since the unintentional injuries dataset had more data in terms of columns and rows, I decided to use a left join to ensure that all the information in that dataset is retained. I was able to combine the unintentional injuries data with the health boards data by matching the health board codes in the unintentional injuries dataset to the health board names in the health boards dataset. I created a new data frame to store the merged data.
+
+To answer the question at hand, the relevant columns will include FinancialYear, AgeGroup, Sex, InjuryType, NumberOfAdmissions all originally from the unintentional injuries dataset, and HBName originally from the health boards dataset. After selection, I was able to obtain the complete dataset with 390177 rows, containing only the seven relevant columns. 
+
+The next step involved reviewing the filtered data to gain an understanding of the data types in each of the columns. Apart from the number of admissions columns, the remaining relevant columns had an object/string data type and needed to be converted to a categorical data type to align with the task's requirements. I proceeded to check for any missing data in the relevant columns and decided to drop columns with NA values as they were not pertinent to the question. The final step was to select relevant rows that will help answer the project question.
+
+To come up with a conclusion, I decided to use the group by function to group the injury types and then filter by calculating the sum of the number of admissions. This enabled me to identify the most common injury types.
+
+The process of loading and viewing data in R was quite similar to Python. The major difference is that the two languages use different libraries. For instance, the tidyverse package in R includes the necessary libraries for conducting analysis in R, compared to using Pandas in Python. The other difference included different function to merge and analyse the data.
+
+For the R question, I selected the following relevant columns: FinancialYear, AgeGroup, InjuryType, NumberOfAdmissions and HBName. I reviewed the data types in the columns and converted the necessary ones into factors, which are similar to categorical data in Python. The process of converting data types was also different from Python. I then proceeded to select the necessary rows to answer the question and dropped rows with NA values.
+
+To answer the question, I only had rows consisting of young people aged 5-14, recorded in 2013/14 and 2022/23. I used the group by function to group injury types for these two years and then utilized the sum function to calculate the number of admissions for each injury type. After summarizing the data, I decided not to include all diagnoses and others in my feedback. I finalized the process by sorting the data to clearly identify the highest and lowest values.
+
+
+## Task 1 other data types or data structures 
+
+* word limit: 150 words maximum 
+* word count: 89
+* Discuss 2 other data types or data structures (2 total) that you could have used in solving this task and why they would or would not be suitable. 
+
+For both tasks, the use of data frame in Python and Tibble in R data structures was the most effective for the analysis. For the column that had number of admissions in Python, the data type was int. However, the float data type should have worked just fine as well. In R, the data type was double, and an integer would have still been effective. Since we were working with a lot of data, data structures such as arrays, lists, and dictionaries would not be suitable for the task.
+
+
+# Task 2: R  
+
+There has been an IT failure in the prescribing databases in a local area. The only remaining data around medications is the backup file below, but it has been scrambled. Explore the following data object `x`. Select **7 of the 10** aspects of data and reconstruct the dataset about medications. Present `x` in a more clear and better structured format, ensuring that the data structure and data types are appropriate, given the (limited) information provided.
+
+The code to load data object `x` has been provided below. 
+
+```{r task2-data}
+# install.packages("rjson")
+# uncomment above if you have not installed the package before 
+
+library(rjson)
+
+x <- fromJSON(file= "../data/task2_data.json")
+```
+
+```{r}
+#Viewing the content of x variable.
+x
+```
+
+
+```{r}
+#Checking for the data types of each list in x
+
+glimpse(x)
+
+```
+
+```{r}
+#Checking for accessibility of the above list items using index notation.
+
+x[4]
+
+```
+
+```{r}
+#Creating a list to asssign labels to the list values in the x dataset. 
+
+list_x <- list( Color = x[[1]],
+                Shape = x[[2]],
+                Drug_Name = x[[3]] ,
+                Weight = x[[4]],
+                Measure = x[[5]] ,
+                Dosage = x[[6]],
+                Available = x[[7]] ,
+                Year_of_Manufacture = x[[8]],
+                Date_of_Prescription = x[[9]] ,
+                Source = x[[10]]
+              )
+list_x
+```
+
+```{r}
+
+df_x <- as_tibble(list_x)
+
+df_x
+
+```
+
+```{r}
+#Will need to combine the weight and measure columns together
+#First is to change the weight column data type into string
+
+df_x <- df_x %>% 
+  mutate(Weight = as.character(Weight))
+         
+df_x
+```
+
+```{r}
+
+#Adding the combined column to the data frame
+
+df_x <- df_x %>%
+    unite(Measurement,Weight,Measure,sep = "")
+
+df_x
+
+```
+#Did not manage to format the date and capitalize entries for this task.
+
+## Task 2 report 
+
+* word limit: 1100 words maximum including Task 1 report  
+* word count: 331
+* Discuss your approach to solving this task (what you did and why you did it this way) and how your approach was similar or different between Python and R. 
+
+For this task, some aspects of data I considered include sharing, accessibility, readability, completeness, accuracy, consistency, and metadata. Working with this dataset reinforced the importance of proper data management. For example, efficient data storage involves storing well-labeled and detailed copies of your data in various accessible storage locations for backup purposes. Another important aspect is the significance of metadata. Working with the raw data was quite challenging because there was no context to what the different data entries represent. Therefore, I had to rely on my own assumptions.
+
+My approach in both languages was to first print out the data loaded by the function for a general overview. When I printed and reviewed the data, I noticed that it consists of 10 lists, each with 25 items. Each item in the list had different data types. I identified strings, numeric values, dates, and a list with 0s and 1s, which I assumed represented Boolean values such as yes or no. 
+
+Based on my understanding of the data, I decided to create a dictionary where I assigned the keys to be the names of what I believe to be the values in the lists. Under each dictionary key, I assigned a list from the x dataset using index notation (0-9) as there were 10 lists. This process slightly changed when using R. Instead of using a dictionary, I used a list. Also, when using index notation, it started from (1-10). After creating the dictionary, the next step was to convert it into a data frame so that the data can be more readable and well structured. For R, I converted the list into a Tibble.
+
+I finalized by cleaning up the data frame by merging some of the columns, formatting the data to capitalize the entries, and also formatting the column with the date data. The structured data using both languages was able to meet the aspects of data in consideration and has more meaning as compared to the initial backup file.
+
+
+
+## Task 2 other data types or data structures
+
+* word limit: 150 words maximum 
+* word count: 44
+* Discuss 2 other data types or data structures (2 total) that you could have used in solving this task and why they would or would not be suitable. 
+
+Category data type – Most of the list items can be grouped into categories, forming a categorical data type in both languages.
+
+For the list items, they can be represented as vectors in R and arrays in Python since they contain the same data types.
+
+
+# Reflective account 
+
+* word limit: 300 word maximum 
+* word count: 295
+* Provide a brief reflective account on your learning journey throughout the course. Reflect on the skills you have developed, and areas that you have noticed that may need further development. The 3 stars and a wish mini-diaries you have been completing across the course can be super useful to you here. 
+
+Coming into this course, I would say I had a better understanding of Python compared to R. It has been interesting to learn new concepts in both languages. A good example would be categorical data types. Even though I might have encountered them in the past, I only developed a better understanding of handling this data type through the course. Studying the two languages together also allowed me to compare the similarities and differences between Python and R.
+
+I have always struggled to explain the difference between lists and similar data structures like arrays and vectors. It was an "AHA" moment to simply realize that the difference lies in the data types. I had a few of such moments; for example, I am now able to use RStudio more effectively as a result of taking this course. This includes tasks such as inserting code chunks and customizing the work environment. For both languages, I feel the need to continue learning about advanced functions for manipulating data types and data structures. This includes concepts such as the datetime data type, regular expressions, and analysing data frames and Tibbles. 
+
+Throughout the course, I have gained a better understanding of the various data types available and how to effectively convert them when needed. I have also learned how to effectively work with data structures, especially when using R. I have rarely used structures such as R lists, and it was even more exciting to convert them into a data frames, which made data analysis easier. Another interesting skill I gained, is the ability to join datasets in both languages and reshape data frames. I intend to further develop my understanding of these concepts. Finally, I did enjoy learning how to use Notable, which I had not used before.
+
+
+
