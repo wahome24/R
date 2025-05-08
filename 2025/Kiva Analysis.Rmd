@@ -1,0 +1,105 @@
+---
+title: "Kiva Loan Data"
+author: "Wahome"
+date: "`r Sys.Date()`"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r}
+#Loading Libraries
+
+library(dplyr)
+
+```
+
+
+```{r}
+#Loading the data
+
+df <- read.csv("C:\\Users\\USER\\Desktop\\DATA\\KIVA\\KivaCleaned.csv")
+
+head(df)
+
+
+```
+
+```{r}
+#Adding a column that stores the difference between loan amount and funded amount
+#The column will be placed after loan amount
+#The data will be sorted based on highest unfunded amount
+
+df <- df %>% mutate(unfunded_amount = loan_amount - funded_amount, .after = loan_amount)%>%                 arrange(desc(unfunded_amount))
+
+ df
+
+```
+
+```{r}
+#Summarisng the sum of funded, loan , and unfunded amounts and comparing the values
+
+df %>% group_by(sector) %>% summarise_at(vars(funded_amount,loan_amount,unfunded_amount),sum)
+
+```
+
+```{r}
+# Saving the summary results into a sector table
+
+sector <- df %>% group_by(sector) %>% summarise_at(vars(funded_amount,loan_amount,unfunded_amount),sum)
+
+sector
+
+```
+
+```{r}
+# Ordering the sectors based on the least funded.
+
+arrange(sector, funded_amount)
+
+```
+```{r}
+#Checking for the % of unfunded amounts by sector
+
+sector %>% mutate( "UnfundedPercentage" = round((unfunded_amount/loan_amount)*100)) %>% arrange(desc(UnfundedPercentage))
+
+```
+
+```{r}
+# Top 10 Countries with the highest loan requests vs Number of loan requests.
+
+head(df %>% group_by(country) %>% summarise("Loan"= sum(loan_amount),"Loan Requests" = (n=n())) %>% arrange(desc(Loan)),10)
+
+```
+```{r}
+#Top 10 Least unfunded countries vs Number of loan requests.
+
+head(df %>% group_by(country) %>% summarise("Loan"= sum(loan_amount),"Loan Requests" = (n=n())) %>% arrange(Loan),10)
+
+```
+##There is a huge gap between the top funded and the least funded countries. Kiva should investigate the causes of the gap. It is clear that the top funded countries also  have high numbers of loan requests while the least funded countries have very few requests. This could mean there is limited awareness in some countries.
+
+
+
+```{r}
+#Top five lenders with the highest loan disbursement vs number of borrowers
+
+head(df %>% group_by(Field.Partner.Name) %>% summarise("Loan" = sum(loan_amount),"Borrowers" = (n=n())) %>% arrange(desc(Loan)),5)
+
+```
+
+```{r}
+#Top five lenders with the lowest loan disbursement vs number of borrowers
+
+tail(df %>% group_by(Field.Partner.Name) %>% summarise("Loan" = sum(loan_amount),"Borrowers" = (n=n())) %>% arrange(desc(Loan)),5)
+
+
+```
+#There is a significant gap between the top and lowest lenders. This is also clear based on the number of borrowers they are servicing.
+
+
+
+
+

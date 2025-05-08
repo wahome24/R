@@ -1,0 +1,109 @@
+---
+title: "NBA Dataset 3"
+author: "Wahome"
+date: "`r Sys.Date()`"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+## R Markdown
+##Goals
+
+To identify:
+
+1. Top 10 players with the highest games played over five seasons
+2. Team total points over the seasons (2021-2025)
+
+```{r}
+library(dplyr)
+library(ggplot2)
+
+```
+
+```{r}
+
+df <- read.csv("C:\\Users\\USER\\Desktop\\SD DATA\\NBA\\DataSet 3.csv")
+
+df
+
+```
+
+```{r}
+#selecting required columns
+
+new.df <- select(df,season,player,tm,Games,fg,pts)
+
+new.df
+
+```
+
+```{r}
+colnames(new.df) <- c('Season','Player','Team','Games.Played','Field.Goals','Points')
+
+```
+
+```{r}
+
+new.df
+
+```
+
+#Filtering for the required data
+
+Team - Boston Celtics - ABV - BOS
+Season - 2021 - 2025
+
+```{r}
+
+seasons <- c(2021,2022,2023,2024,2025)
+seasons
+
+```
+
+
+```{r}
+
+cleaned.df <- new.df %>% filter(Team == 'BOS') %>% filter(Season %in% seasons)
+
+cleaned.df
+
+```
+
+```{r}
+
+#Top 10 players based on total games played
+
+
+players <- cleaned.df %>% group_by(Player) %>%  summarise('Total.Games' = sum(Games.Played))
+
+head(arrange(players,desc(Total.Games)),10)
+
+```
+
+```{r}
+#Team points over the seasons (2021-2025)
+
+team.points <- cleaned.df %>% group_by(Season) %>% summarise('Total.Points' = sum(Points))
+
+team.points
+
+```
+## Including Plots
+
+```{r}
+#Line Chart visualization
+
+ggplot(team.points, aes(x=Season,y=Total.Points)) + geom_smooth() + ggtitle('Total Points Per Season')+ ggtitle('Total Points Per Season')
+
+```
+
+```{r}
+#Column Chart Visualization
+
+ggplot(team.points, aes(x=Season,y=Total.Points)) + geom_col(fill='blue', colour = 'red', width = 0.5) + ggtitle('Total Points Per Season')
+
+```
+
+
