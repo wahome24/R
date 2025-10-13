@@ -1,0 +1,208 @@
+---
+title: "HR Analysis"
+author: "Wahome"
+date: "`r Sys.Date()`"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+#HR Analytics
+#The code explores relevant HR metrics especially when it comes to attrition.
+
+```{r}
+library(dplyr)
+```
+
+```{r}
+#Loading Data
+
+df <- read.csv("C:\\Users\\USER\\Desktop\\DATA\\2025\\HR Data\\WA_Fn-UseC_-HR-Employee-Attrition.csv")
+
+head(df)
+```
+
+
+```{r}
+#Selecting required columns
+
+new.df <- select(df,Age,Attrition,Department,EducationField,EmployeeCount,Gender,JobRole,JobSatisfaction,MaritalStatus,MonthlyIncome,PerformanceRating,WorkLifeBalance,YearsAtCompany,YearsSinceLastPromotion)
+
+head(new.df)
+```
+
+##Workforce composition & demographics
+
+```{r}
+#Total Employees
+
+Total.Employees <- sum(new.df$EmployeeCount)
+
+Total.Employees 
+
+```
+```{r}
+#Average Age in the company based on gender
+
+new.df %>% group_by(Gender) %>% summarise(Average.Age = round(mean(Age)))
+```
+
+```{r}
+# Number of employees based on gender
+
+new.df %>% group_by(Gender) %>% summarise(sum(EmployeeCount))
+
+```
+```{r}
+#Employee distribution by department
+
+new.df %>% group_by(Department) %>% summarise(NumofEmployees = n())
+
+```
+```{r}
+#Employees Education Fields Stats
+
+new.df %>% group_by(EducationField) %>% summarise(NumofEmployees = n()) %>% arrange(desc(NumofEmployees))
+
+```
+
+```{r}
+## Number of employees per department based on gender
+
+new.df %>% group_by(Department,Gender) %>% summarise(Employees = sum(EmployeeCount))
+
+```
+##Research & Development has the highest number of employees.
+
+```{r}
+#Average no of years to be promoted based on department
+
+new.df %>% group_by(Department) %>% summarise(AveragePromotion = round(mean(YearsSinceLastPromotion),1))
+```
+
+```{r}
+#Average Salary based on role
+
+new.df %>% group_by(JobRole) %>% summarise( AverageSalary = mean(MonthlyIncome)) %>% arrange(desc(AverageSalary))
+
+```
+```{r}
+#Total Attrition rate
+
+AE <- sum(new.df$Attrition == 'No')
+LE <- sum(new.df$Attrition == 'Yes')
+AR <- (LE/Total.Employees) * 100
+
+round(AR,2)
+
+```
+```{r}
+#Attrition Statistics
+
+new.df %>% group_by(Attrition) %>% summarise(NumofEmployees = n())
+
+```
+
+```{r}
+#Attrition by department
+
+new.df %>%
+  group_by(Department) %>%
+  summarise(
+    Total = n(),
+    Left = sum(Attrition == "Yes"),
+    Active  = sum(Attrition == "No"),
+    Attrition_Rate = round((sum(Attrition == "Yes") / n()) * 100)
+  )
+
+```
+
+```{r}
+#Attrition rate based on gender
+
+new.df %>%
+  group_by(Gender) %>%
+  summarise(
+    Total = n(),
+    Left = sum(Attrition == "Yes"),
+    Active  = sum(Attrition == "No"),
+    Attrition_Rate = round((sum(Attrition == "Yes") / n()) * 100)
+  )
+
+```
+
+
+```{r}
+#Years in company vs Attrition
+#Does number of years working contribute to attrition?
+
+new.df %>%
+  group_by(YearsAtCompany) %>%
+  summarise(
+    Total = n(),
+    Left = sum(Attrition == "Yes"),
+    Active  = sum(Attrition == "No"),
+    Attrition_Rate = round((sum(Attrition == "Yes") / n()) * 100)
+  ) %>%
+  arrange(desc(Attrition_Rate))
+
+
+```
+
+
+```{r}
+#Attrition by Age
+
+  new.df %>%
+  group_by(Age) %>%
+  summarise(
+    Total = n(),
+    Left = sum(Attrition == "Yes"),
+    Active  = sum(Attrition == "No"),
+    Attrition_Rate = round((sum(Attrition == "Yes") / n()) * 100)
+  ) %>%
+  arrange(desc(Attrition_Rate))
+
+```
+
+
+```{r}
+#Attrition by WorkLifeBalance
+new.df %>%
+  group_by(WorkLifeBalance) %>%
+  summarise(
+    Total = n(),
+    Left = sum(Attrition == "Yes"),
+    Active  = sum(Attrition == "No"),
+    Attrition_Rate = round((sum(Attrition == "Yes") / n()) * 100)
+  ) %>%
+  arrange(desc(Attrition_Rate))
+```
+```{r}
+#Attrition by JobSatisfaction
+new.df %>%
+  group_by(JobSatisfaction) %>%
+  summarise(
+    Total = n(),
+    Left = sum(Attrition == "Yes"),
+    Active  = sum(Attrition == "No"),
+    Attrition_Rate = round((sum(Attrition == "Yes") / n()) * 100)
+  ) %>%
+  arrange(desc(Attrition_Rate))
+```
+#It can be implied that lower job satisfaction leads to high attrition rate.
+
+```{r}
+#Attrition based on performance rating
+new.df %>%
+  group_by(PerformanceRating) %>%
+  summarise(
+    Total = n(),
+    Left = sum(Attrition == "Yes"),
+    Active  = sum(Attrition == "No"),
+    Attrition_Rate = round((sum(Attrition == "Yes") / n()) * 100,2)
+  ) %>%
+  arrange(desc(Attrition_Rate))
+```
